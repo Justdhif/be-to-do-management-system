@@ -39,15 +39,38 @@ router.post('/create', async function (req, res) {
   res.send(userTask);
 });
 
-// Hard Delete User Task
+// Update User Task
+router.put(
+  '/update-user-task/:user_id_param/:task_id_param',
+  async function (req, res) {
+    const { user_id_param, task_id_param } = req.params;
+    const { user_id, task_id } = req.body;
+
+    const userTask = await prisma.userTask.update({
+      where: {
+        user_id_task_id: {
+          user_id: parseInt(user_id_param),
+          task_id: parseInt(task_id_param),
+        },
+      },
+      data: {
+        user_id: parseInt(user_id),
+        task_id: parseInt(task_id),
+      },
+    });
+    res.send(userTask);
+  }
+);
+
+// Delete User
 router.delete('/delete/:id', async function (req, res) {
   const { id } = req.params;
-  const userTask = await prisma.userTask.delete({
+  const user = await prisma.user.delete({
     where: {
       id: parseInt(id),
     },
   });
-  res.send(userTask);
+  res.send(user);
 });
 
 // Select Join Table

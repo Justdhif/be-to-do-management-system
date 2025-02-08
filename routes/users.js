@@ -8,7 +8,19 @@ const { stringify } = require('jade/lib/utils');
 // Get all users
 router.get('/all', async function (req, res) {
   const users = await prisma.user.findMany();
-  res.json(users);
+  if (users.length === 0 || users === null || users === undefined) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'No users found',
+    });
+  } else {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        users,
+      },
+    });
+  }
 });
 
 // Get user by id
@@ -19,7 +31,19 @@ router.get('/:id', async function (req, res) {
       id: parseInt(id),
     },
   });
-  res.json(user);
+  if (user === null || user === undefined) {
+    return res.status(404).json({
+      status: 'error',
+      message: `User with id ${id} not found`,
+    });
+  } else {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        user,
+      },
+    });
+  }
 });
 
 // Create a new user
@@ -27,14 +51,37 @@ router.post('/create', async function (req, res) {
   const { username, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   const stringPassword = await stringify(hashedPassword);
-  const user = await prisma.user.create({
-    data: {
-      username,
-      email,
-      password: stringPassword,
-    },
-  });
-  res.json(user);
+
+  username === ''
+    ? res.status(400).json({
+        status: 'error',
+        message: 'Missing username',
+      })
+    : email === ''
+      ? res.status(400).json({
+          status: 'error',
+          message: 'Missing email',
+        })
+      : password === ''
+        ? res.status(400).json({
+            status: 'error',
+            message: 'Missing password',
+          })
+        : async () => {
+            const user = await prisma.user.create({
+              data: {
+                username,
+                email,
+                password: stringPassword,
+              },
+            });
+            res.status(200).json({
+              status: 'success',
+              data: {
+                user,
+              },
+            });
+          };
 });
 
 // Update User
@@ -43,43 +90,99 @@ router.put('/update/:id', async function (req, res) {
   const { name, email, password } = req.body;
   const hashPassword = bcrypt.hash(password, 10);
   const stringPassword = stringify(hashPassword);
-  const user = await prisma.user.update({
-    where: {
-      id: parseInt(id),
-    },
-    data: {
-      username: name,
-      email,
-      password: stringPassword,
-    },
-  });
-  res.send(user);
+
+  name === ''
+    ? res.status(400).json({
+        status: 'error',
+        message: 'Missing username',
+      })
+    : email === ''
+      ? res.status(400).json({
+          status: 'error',
+          message: 'Missing email',
+        })
+      : password === ''
+        ? res.status(400).json({
+            status: 'error',
+            message: 'Missing password',
+          })
+        : async () => {
+            const user = await prisma.user.update({
+              where: {
+                id: parseInt(id),
+              },
+              data: {
+                username: name,
+                email,
+                password: stringPassword,
+              },
+            });
+            res.status(200).json({
+              status: 'success',
+              data: {
+                user,
+              },
+            });
+          };
 });
 
 // Soft Delete User
 router.delete('/delete/:id', async function (req, res) {
   const { id } = req.params;
-  const user = await prisma.user.update({
+  const userExist = await prisma.user.findUnique({
     where: {
       id: parseInt(id),
     },
-    data: {
-      deleted_at: new Date(),
-      is_deleted: true,
-    },
   });
-  res.send(user);
+  userExist === null
+    ? res.json({
+        status: 'error',
+        message: `User with id ${id} not found`,
+      })
+    : async () => {
+        const user = await prisma.user.update({
+          where: {
+            id: parseInt(id),
+          },
+          data: {
+            is_deleted: true,
+          },
+        });
+        res.status(200).json({
+          status: 'success',
+          data: {
+            user,
+          },
+        });
+      };
 });
 
 // Hard Delete User
 router.delete('/hard-delete/:id', async function (req, res) {
   const { id } = req.params;
-  const user = await prisma.user.delete({
+  const userExist = await prisma.user.findUnique({
     where: {
       id: parseInt(id),
     },
   });
-  res.send(user);
+  userExist === null
+    ? res.json({
+        status: 'error',
+        message: `User with id ${id} not found`,
+      })
+    : async () => {
+        const user = await prisma.user.delete({
+          where: {
+            id: parseInt(id),
+          },
+        });
+        res.status(200).json({
+          status: 'success',
+          data: {
+            user,
+          },
+        });
+      };
 });
 
 module.exports = router;
