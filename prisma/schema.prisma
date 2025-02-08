@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  username   String
+  email      String
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+  is_deleted Boolean  @default(false)
+  tasks      UserTask[]
+}
+
+model Task {
+  id         Int      @id @default(autoincrement())
+  title      String
+  desc       String
+  priority   String
+  deadline   DateTime 
+  is_done    Boolean
+  created_by String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  deleted_at DateTime?
+  is_deleted Boolean  @default(false)
+  users      UserTask[]
+}
+
+model UserTask {
+  id      Int  @default(autoincrement())  // Bukan primary key
+  user_id Int
+  task_id Int
+
+  user   User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  task   Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, task_id])  // Composite key
+}
