@@ -3,7 +3,7 @@ var router = express.Router();
 
 // Greeting API
 router.get('/', function (req, res) {
-  res.send('Welcome to To-Do Management System API');
+  res.send('lorem ipsum consectetur adipiscing, Alhamdulillah API is running');
 });
 
 module.exports = router;
